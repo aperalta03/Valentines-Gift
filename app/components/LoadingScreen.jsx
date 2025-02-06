@@ -5,9 +5,9 @@ import styles from './LoadingScreen.module.css';
 
 const messages = [
   "Loading the magic...",
-  "Almost there...",
-  "Just a sec...",
-  "Hang tight..."
+  "Collecting memories...",
+  "Loving you more...",
+  "Almost there..."
 ];
 
 export default function LoadingScreen({ onComplete }) {
