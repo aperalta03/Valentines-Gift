@@ -1,3 +1,5 @@
+# Fuck 'free' QR code generators with their goofy ass ads.
+
 import sys
 import qrcode
 
