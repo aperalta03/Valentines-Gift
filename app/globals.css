@@ -11,7 +11,7 @@ body {
   margin: 0;
   padding: 0;
   border: none;
-  background-color: #f7d9b4;
+  background: linear-gradient(135deg, #ffb3d9 0%, #ff99cc 50%, #ff80bf 100%);
   overflow-x: hidden;
   overflow-y: auto;
   -ms-overflow-style: none; 

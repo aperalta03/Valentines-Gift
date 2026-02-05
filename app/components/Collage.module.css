@@ -1,136 +1,212 @@
 .collageWrapper {
-    position: relative;
-    background-image: url('/background.png');
-    background-attachment: fixed;
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-}  
-.title {
-    font-size: 4rem;
-    font-style: italic;
-    font-weight: bold;
-    margin: 3rem 0;
-}  
-.collageContainer {
-    margin-top: 3rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
+  position: relative;
+  background: linear-gradient(135deg, #ffb3d9 0%, #ff99cc 50%, #ff80bf 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  z-index: 2;
 }
-.imageItem {
-    width: 20%;
-    height: auto;
-    object-fit: cover;
-    border-radius: 4px;
-    border: 4px solid white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: transform 0.6s ease-out, opacity 0.6s ease-out;
-    opacity: 0;
+
+.carouselContainer {
+  width: 100%;
+  max-width: 400px;
+  margin: 2rem auto;
+  position: relative;
+  overflow: hidden;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
 }
-.imageItem:nth-child(odd) {
-    transform: rotate(-20deg) translateX(-150px);
+
+.carouselContainer:active {
+  cursor: grabbing;
 }
-.imageItem:nth-child(even) {
-    transform: rotate(20deg) translateX(150px);
+
+.carouselTrack {
+  display: flex;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
-.imageItem.visible:nth-child(odd) {
-    transform: rotate(-20deg) translateX(-50px);
-    opacity: 1;
+
+.carouselTrack.noTransition {
+  transition: none;
 }
-.imageItem.visible:nth-child(even) {
-    transform: rotate(20deg) translateX(50px);
-    opacity: 1;
-}  
-.subscriptionSection {
-    text-align: center;
-    margin-top: 10rem;
-    margin-bottom: 5rem;
-}  
-.subscriptionText {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
+
+.card {
+  min-width: 100%;
+  padding: 0 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+
+.cardImage {
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  object-fit: cover;
+  display: block;
+  background: white;
+  padding: 0.5rem;
+}
+
+.dotsContainer {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+  flex-wrap: wrap;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.dot:hover {
+  background-color: rgba(255, 255, 255, 0.7);
+  transform: scale(1.2);
+}
+
+.activeDot {
+  background-color: #d4af37;
+  width: 12px;
+  height: 12px;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.messageSection {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 0 1rem;
+  max-width: 500px;
+}
+
+.messageText {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 2rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  line-height: 1.4;
+}
+
 .buttonContainer {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    gap: 1rem;
-}  
-.yesButton {
-    background-color: #4CAF50;
-    color: white;
-    border: solid 1px black;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}  
-.noButton {
-    background-color: #F44336;
-    border: none;
-    color: transparent;
-    border: solid 1px black;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    font-size: 1rem;
-    position: relative;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}  
-.noButton::before {
-    content: "No";
-    color: white;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
 }
+
+.yesButton {
+  background: linear-gradient(135deg, #d4af37 0%, #c9a227 100%);
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+  min-width: 120px;
+}
+
+.yesButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+  background: linear-gradient(135deg, #e5c047 0%, #d4af37 100%);
+}
+
+.yesButton:active {
+  transform: translateY(0);
+}
+
+.noButton {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  padding: 1rem 3rem;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  backdrop-filter: blur(10px);
+}
+
 .noButton:hover {
-    background-color: #4CAF50;
-}  
-.noButton:hover::before {
-    content: "Yes";
-}  
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.7);
+  transform: translateY(-2px);
+}
+
+.noButton:active {
+  transform: translateY(0);
+}
+
 /* MOBILE RESPONSIVENESS */
 @media (max-width: 768px) {
-    .title {
-      font-size: 2.5rem;
-      margin: 2rem 0;
-      text-align: center;
-    }
-    .subscriptionText {
-      font-size: 1.2rem;
-    }
-    .subscriptionSection {
-      margin-top: 3rem;
-      margin-bottom: 3rem;
-    }
-    .imageItem {
-      width: 90%;
-      border-width: 2px;
-    }
-    .imageItem:nth-child(odd) {
-      transform: rotate(-20deg) translateX(-50px);
-    }
-    .imageItem:nth-child(even) {
-      transform: rotate(20deg) translateX(50px);
-    }
-    .imageItem.visible {
-      transform: none;
-      opacity: 1;
-    }
-    .buttonContainer button {
-      font-size: 0.9rem;
-      padding: 0.5rem 0.8rem;
-    }
+  .collageWrapper {
+    padding: 1rem 0.5rem;
+  }
+
+  .carouselContainer {
+    max-width: 100%;
+    margin: 1rem auto;
+  }
+
+  .card {
+    padding: 0 0.5rem;
+  }
+
+  .cardImage {
+    max-width: 100%;
+    border-radius: 15px;
+  }
+
+  .messageText {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .buttonContainer {
+    gap: 1rem;
+    flex-direction: row;
+  }
+
+  .yesButton,
+  .noButton {
+    padding: 0.9rem 2rem;
+    font-size: 1.1rem;
+    min-width: 100px;
+  }
+
+  .dotsContainer {
+    margin: 1rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .messageText {
+    font-size: 1.3rem;
+  }
+
+  .yesButton,
+  .noButton {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    min-width: 90px;
+  }
 }

@@ -1,13 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import styles from './Collage.module.css';
 
 export default function Collage({ onImagesLoaded }) {
   const [images, setImages] = useState([]);
   const [loadedCount, setLoadedCount] = useState(0);
-  const [noClicks, setNoClicks] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [startX, setStartX] = useState(0);
+  const [currentX, setCurrentX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     async function fetchImages() {
@@ -32,37 +38,97 @@ export default function Collage({ onImagesLoaded }) {
     }
   }, [loadedCount, images, onImagesLoaded]);
 
+  // Touch/Mouse handlers for swiping
+  const handleStart = (clientX) => {
+    setIsDragging(true);
+    setStartX(clientX);
+    setCurrentX(clientX);
+  };
+
+  const handleMove = (clientX) => {
+    if (!isDragging) return;
+    setCurrentX(clientX);
+    const diff = clientX - startX;
+    setOffset(diff);
+  };
+
+  const handleEnd = () => {
+    if (!isDragging) return;
+    
+    // Use offset directly since it's already calculated
+    const diff = offset;
+    const threshold = 50; // Minimum swipe distance
+    
+    if (Math.abs(diff) > threshold) {
+      setIsTransitioning(true);
+      if (diff > 0 && currentIndex > 0) {
+        // Swipe right - go to previous
+        setCurrentIndex(currentIndex - 1);
+      } else if (diff < 0 && currentIndex < images.length - 1) {
+        // Swipe left - go to next
+        setCurrentIndex(currentIndex + 1);
+      }
+      setTimeout(() => setIsTransitioning(false), 300);
+    }
+    
+    setIsDragging(false);
+    setOffset(0);
+  };
+
+  // Touch events
+  const handleTouchStart = (e) => {
+    handleStart(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    handleMove(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    handleEnd();
+  };
+
+  // Mouse events (for desktop testing)
+  const handleMouseDown = (e) => {
+    handleStart(e.clientX);
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      handleMove(e.clientX);
+    }
+  };
+
+  const handleMouseUp = () => {
+    handleEnd();
+  };
+
   useEffect(() => {
-    const items = document.querySelectorAll(`.${styles.imageItem}`);
-    const observer = new IntersectionObserver(
-      (entries, observerInstance) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add(styles.visible);
-            observerInstance.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-    items.forEach((item) => observer.observe(item));
-    return () => {
-      items.forEach((item) => observer.unobserve(item));
-    };
-  }, [images]);
+    if (isDragging) {
+      const handleMouseMoveEvent = (e) => handleMove(e.clientX);
+      const handleMouseUpEvent = () => handleEnd();
+      
+      document.addEventListener('mousemove', handleMouseMoveEvent);
+      document.addEventListener('mouseup', handleMouseUpEvent);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMoveEvent);
+        document.removeEventListener('mouseup', handleMouseUpEvent);
+      };
+    }
+  }, [isDragging]);
 
   const triggerConfetti = () => {
-    const scalar = 4; 
+    const scalar = 4;
     const heart = confetti.shapeFromText({ text: '❤️', scalar });
     confetti({
-      particleCount: 200,      
-      angle: 180,              
-      spread: 1000,            
-      origin: { x: 0.5, y: 0 }, 
+      particleCount: 200,
+      angle: 180,
+      spread: 1000,
+      origin: { x: 0.5, y: 0 },
       shapes: [heart],
       scalar: scalar,
-      startVelocity: 30,     
-      ticks: 300,            
+      startVelocity: 30,
+      ticks: 300,
     });
   };
 
@@ -71,39 +137,77 @@ export default function Collage({ onImagesLoaded }) {
   };
 
   const handleNoClick = () => {
-    setNoClicks((prev) => {
-      const newCount = prev + 1;
-      if (newCount >= 2) {
-        triggerConfetti();
-        return 0;
-      }
-      return newCount;
-    });
+    // No button can still trigger confetti after a few clicks if desired
+    // For now, keeping it simple
   };
+
+  const goToPrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const goToNext = () => {
+    if (currentIndex < images.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const transformX = -currentIndex * 100 + (offset / (containerRef.current?.offsetWidth || 1)) * 100;
 
   return (
     <div className={styles.collageWrapper}>
-      <h1 className={styles.title}>My Beautiful Girlfriend</h1>
-      <div className={styles.collageContainer}>
-        {images.map((file, index) => (
-          <img
-            key={index}
-            src={`/MY_BABY/${file}`}
-            alt={`Image ${index}`}
-            className={styles.imageItem}
-            onLoad={() => setLoadedCount((prev) => prev + 1)}
-          />
-        ))}
+      <div className={styles.carouselContainer}
+        ref={containerRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+      >
+        <div 
+          className={`${styles.carouselTrack} ${isDragging ? styles.noTransition : ''}`}
+          style={{ transform: `translateX(${transformX}%)` }}
+        >
+          {images.map((file, index) => (
+            <div key={index} className={styles.card}>
+              <img
+                src={`/MY_BABY/${file}`}
+                alt={`Image ${index + 1}`}
+                className={styles.cardImage}
+                onLoad={() => setLoadedCount((prev) => prev + 1)}
+                draggable={false}
+              />
+            </div>
+          ))}
+        </div>
       </div>
-      <div className={styles.subscriptionSection}>
-        <p className={styles.subscriptionText}>
-          Do you want to be my Valentine and my baby for another year? Renew subscription.
+
+      {/* Navigation dots */}
+      {images.length > 1 && (
+        <div className={styles.dotsContainer}>
+          {images.map((_, index) => (
+            <button
+              key={index}
+              className={`${styles.dot} ${index === currentIndex ? styles.activeDot : ''}`}
+              onClick={() => setCurrentIndex(index)}
+              aria-label={`Go to image ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Message section */}
+      <div className={styles.messageSection}>
+        <p className={styles.messageText}>
+          Will you be my Valentine 2026?
         </p>
         <div className={styles.buttonContainer}>
           <button className={styles.yesButton} onClick={handleYesClick}>
             Yes
           </button>
-          <button className={styles.noButton} onClick={handleNoClick}></button>
+          <button className={styles.noButton} onClick={handleNoClick}>
+            No
+          </button>
         </div>
       </div>
     </div>
