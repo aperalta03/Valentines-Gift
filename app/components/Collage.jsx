@@ -6,6 +6,7 @@ import styles from './Collage.module.css';
 
 export default function Collage({ onImagesLoaded }) {
   const [images, setImages] = useState([]);
+  const [imageVersion, setImageVersion] = useState('V1'); // Default to V1
   const [loadedCount, setLoadedCount] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [startX, setStartX] = useState(0);
@@ -23,6 +24,10 @@ export default function Collage({ onImagesLoaded }) {
         const data = await res.json();
         if (data && data.images) {
           setImages(data.images);
+          // Store the version so we can use it in image paths
+          if (data.version) {
+            setImageVersion(data.version);
+          }
         }
       } catch (error) {
         console.error('Error fetching images:', error);
@@ -161,7 +166,7 @@ export default function Collage({ onImagesLoaded }) {
           {images.map((file, index) => (
             <div key={index} className={styles.card}>
               <img
-                src={`/MY_BABY/${file}`}
+                src={`/MY_BABY/${imageVersion}/${file}`}
                 alt={`Image ${index + 1}`}
                 className={styles.cardImage}
                 onLoad={() => setLoadedCount((prev) => prev + 1)}
