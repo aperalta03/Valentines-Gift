@@ -8,10 +8,18 @@ const SWIPE_THRESHOLD = 80;
 const ROTATION_FACTOR = 0.15;
 const FLY_OFF_DISTANCE = 1200;
 
+function shuffleArray(arr) {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 export default function Collage({ onImagesLoaded }) {
   const [images, setImages] = useState([]);
   const [imageVersion, setImageVersion] = useState('V1');
-  const [loadedCount, setLoadedCount] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [startX, setStartX] = useState(0);
   const [offset, setOffset] = useState(0);
@@ -30,7 +38,7 @@ export default function Collage({ onImagesLoaded }) {
         const res = await fetch('/api/images');
         const data = await res.json();
         if (data && data.images) {
-          setImages(data.images);
+          setImages(shuffleArray(data.images));
           if (data.version) setImageVersion(data.version);
         }
       } catch (error) {
@@ -40,11 +48,22 @@ export default function Collage({ onImagesLoaded }) {
     fetchImages();
   }, []);
 
+  // Preload all images so swiping never shows a loading state
   useEffect(() => {
-    if (images.length > 0 && loadedCount === images.length && onImagesLoaded) {
-      onImagesLoaded();
-    }
-  }, [loadedCount, images, onImagesLoaded]);
+    if (!images.length || !imageVersion) return;
+    let loaded = 0;
+    const total = images.length;
+    const onLoad = () => {
+      loaded += 1;
+      if (loaded === total && onImagesLoaded) onImagesLoaded();
+    };
+    images.forEach((file) => {
+      const img = new Image();
+      img.onload = onLoad;
+      img.onerror = onLoad;
+      img.src = `/MY_BABY/${imageVersion}/${file}`;
+    });
+  }, [images, imageVersion, onImagesLoaded]);
 
   offsetRef.current = offset;
 
@@ -195,7 +214,6 @@ export default function Collage({ onImagesLoaded }) {
               src={`/MY_BABY/${imageVersion}/${images[currentIndex]}`}
               alt={`Slide ${currentIndex + 1}`}
               className={styles.cardImage}
-              onLoad={() => setLoadedCount((prev) => prev + 1)}
               draggable={false}
             />
           </div>
