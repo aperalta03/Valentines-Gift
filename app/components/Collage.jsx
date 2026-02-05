@@ -202,9 +202,10 @@ export default function Collage({ onImagesLoaded }) {
           </div>
         )}
 
-        {/* Front card (current, swipable) */}
+        {/* Front card (current, swipable). key so new card mounts at (0,0) after swipe - no rubber-band */}
         {images.length > 0 && (
           <div
+            key={currentIndex}
             ref={cardRef}
             className={`${styles.cardFront} ${isDragging ? styles.noTransition : ''} ${isAnimatingOut ? styles.flyOff : ''}`}
             style={{ transform: getCardTransform() }}
