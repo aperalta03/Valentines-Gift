@@ -4,18 +4,25 @@ import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import styles from './Collage.module.css';
 
+const SWIPE_THRESHOLD = 80;
+const ROTATION_FACTOR = 0.15;
+const FLY_OFF_DISTANCE = 1200;
+
 export default function Collage({ onImagesLoaded }) {
   const [images, setImages] = useState([]);
-  const [imageVersion, setImageVersion] = useState('V1'); // Default to V1
+  const [imageVersion, setImageVersion] = useState('V1');
   const [loadedCount, setLoadedCount] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [startX, setStartX] = useState(0);
-  const [currentX, setCurrentX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
   const [offset, setOffset] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+  const [exitDirection, setExitDirection] = useState(null); // 'left' | 'right' | null
   const [noButtonClicked, setNoButtonClicked] = useState(false);
-  const containerRef = useRef(null);
+  const offsetRef = useRef(0);
+  const cardRef = useRef(null);
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
 
   useEffect(() => {
     async function fetchImages() {
@@ -24,10 +31,7 @@ export default function Collage({ onImagesLoaded }) {
         const data = await res.json();
         if (data && data.images) {
           setImages(data.images);
-          // Store the version so we can use it in image paths
-          if (data.version) {
-            setImageVersion(data.version);
-          }
+          if (data.version) setImageVersion(data.version);
         }
       } catch (error) {
         console.error('Error fetching images:', error);
@@ -37,90 +41,76 @@ export default function Collage({ onImagesLoaded }) {
   }, []);
 
   useEffect(() => {
-    if (images.length > 0 && loadedCount === images.length) {
-      if (onImagesLoaded) {
-        onImagesLoaded();
-      }
+    if (images.length > 0 && loadedCount === images.length && onImagesLoaded) {
+      onImagesLoaded();
     }
   }, [loadedCount, images, onImagesLoaded]);
 
-  // Touch/Mouse handlers for swiping
+  offsetRef.current = offset;
+
   const handleStart = (clientX) => {
+    if (isAnimatingOut) return;
     setIsDragging(true);
     setStartX(clientX);
-    setCurrentX(clientX);
+    setOffset(0);
+    setExitDirection(null);
   };
 
   const handleMove = (clientX) => {
-    if (!isDragging) return;
-    setCurrentX(clientX);
+    if (!isDragging || isAnimatingOut) return;
     const diff = clientX - startX;
     setOffset(diff);
   };
 
   const handleEnd = () => {
     if (!isDragging) return;
-    
-    // Use offset directly since it's already calculated
-    const diff = offset;
-    const threshold = 50; // Minimum swipe distance
-    
-    if (Math.abs(diff) > threshold) {
-      setIsTransitioning(true);
-      if (diff > 0 && currentIndex > 0) {
-        // Swipe right - go to previous
-        setCurrentIndex(currentIndex - 1);
-      } else if (diff < 0 && currentIndex < images.length - 1) {
-        // Swipe left - go to next
-        setCurrentIndex(currentIndex + 1);
-      }
-      setTimeout(() => setIsTransitioning(false), 300);
+    const diff = offsetRef.current;
+    const idx = currentIndexRef.current;
+    const goNext = diff < -SWIPE_THRESHOLD && idx < images.length - 1;
+    const goPrev = diff > SWIPE_THRESHOLD && idx > 0;
+
+    if (goNext || goPrev) {
+      const direction = goNext ? 'left' : 'right';
+      setExitDirection(direction);
+      setIsAnimatingOut(true);
+      setIsDragging(false);
+      setOffset(0);
+      return;
     }
-    
     setIsDragging(false);
     setOffset(0);
   };
 
-  // Touch events
+  const handleTransitionEnd = () => {
+    if (!isAnimatingOut || !exitDirection) return;
+    setCurrentIndex((prev) => prev + (exitDirection === 'left' ? 1 : -1));
+    setIsAnimatingOut(false);
+    setExitDirection(null);
+  };
+
   const handleTouchStart = (e) => {
     handleStart(e.touches[0].clientX);
   };
-
   const handleTouchMove = (e) => {
     handleMove(e.touches[0].clientX);
   };
-
   const handleTouchEnd = () => {
     handleEnd();
   };
-
-  // Mouse events (for desktop testing)
   const handleMouseDown = (e) => {
     handleStart(e.clientX);
   };
 
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      handleMove(e.clientX);
-    }
-  };
-
-  const handleMouseUp = () => {
-    handleEnd();
-  };
-
   useEffect(() => {
-    if (isDragging) {
-      const handleMouseMoveEvent = (e) => handleMove(e.clientX);
-      const handleMouseUpEvent = () => handleEnd();
-      
-      document.addEventListener('mousemove', handleMouseMoveEvent);
-      document.addEventListener('mouseup', handleMouseUpEvent);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMoveEvent);
-        document.removeEventListener('mouseup', handleMouseUpEvent);
-      };
-    }
+    if (!isDragging) return;
+    const onMouseMove = (e) => handleMove(e.clientX);
+    const onMouseUp = () => handleEnd();
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
   }, [isDragging]);
 
   const triggerConfetti = () => {
@@ -132,76 +122,111 @@ export default function Collage({ onImagesLoaded }) {
       spread: 1000,
       origin: { x: 0.5, y: 0 },
       shapes: [heart],
-      scalar: scalar,
+      scalar,
       startVelocity: 30,
       ticks: 300,
     });
   };
 
-  const handleYesClick = () => {
-    triggerConfetti();
-  };
-
+  const handleYesClick = () => triggerConfetti();
   const handleNoClick = () => {
-    // Funny: "No" button changes to "Yes" and triggers confetti!
     setNoButtonClicked(true);
     triggerConfetti();
   };
 
-  const transformX = -currentIndex * 100 + (offset / (containerRef.current?.offsetWidth || 1)) * 100;
+  // Card transform: tilt + translate while dragging, or fly-off when releasing
+  const getCardTransform = () => {
+    if (isAnimatingOut && exitDirection) {
+      const x = exitDirection === 'left' ? -FLY_OFF_DISTANCE : FLY_OFF_DISTANCE;
+      const rot = exitDirection === 'left' ? -25 : 25;
+      return `translateX(${x}px) rotate(${rot}deg)`;
+    }
+    const rot = offset * ROTATION_FACTOR;
+    return `translateX(${offset}px) rotate(${rot}deg)`;
+  };
+
+  const showBackCard = isDragging || isAnimatingOut;
+  const backIndex =
+    showBackCard
+      ? exitDirection === 'left'
+        ? currentIndex + 1
+        : exitDirection === 'right'
+          ? currentIndex - 1
+          : offset < 0
+            ? currentIndex + 1
+            : currentIndex - 1
+      : currentIndex + 1;
+
+  const canShowBack =
+    (exitDirection === 'left' && currentIndex < images.length - 1) ||
+    (exitDirection === 'right' && currentIndex > 0) ||
+    (isDragging && ((offset < 0 && currentIndex < images.length - 1) || (offset > 0 && currentIndex > 0)));
 
   return (
     <div className={styles.collageWrapper}>
-      <div className={styles.carouselContainer}
-        ref={containerRef}
+      <div
+        className={styles.cardStack}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
       >
-        <div 
-          className={`${styles.carouselTrack} ${isDragging ? styles.noTransition : ''}`}
-          style={{ transform: `translateX(${transformX}%)` }}
-        >
-          {images.map((file, index) => (
-            <div key={index} className={styles.card}>
-              <img
-                src={`/MY_BABY/${imageVersion}/${file}`}
-                alt={`Image ${index + 1}`}
-                className={styles.cardImage}
-                onLoad={() => setLoadedCount((prev) => prev + 1)}
-                draggable={false}
+        {/* Back card (next/prev peek) */}
+        {images.length > 0 && canShowBack && backIndex >= 0 && backIndex < images.length && (
+          <div className={styles.cardBase} aria-hidden>
+            <img
+              src={`/MY_BABY/${imageVersion}/${images[backIndex]}`}
+              alt=""
+              className={styles.cardImage}
+              draggable={false}
+            />
+          </div>
+        )}
+
+        {/* Front card (current, swipable) */}
+        {images.length > 0 && (
+          <div
+            ref={cardRef}
+            className={`${styles.cardFront} ${isDragging ? styles.noTransition : ''} ${isAnimatingOut ? styles.flyOff : ''}`}
+            style={{ transform: getCardTransform() }}
+            onTransitionEnd={handleTransitionEnd}
+          >
+            <img
+              src={`/MY_BABY/${imageVersion}/${images[currentIndex]}`}
+              alt={`Slide ${currentIndex + 1}`}
+              className={styles.cardImage}
+              onLoad={() => setLoadedCount((prev) => prev + 1)}
+              draggable={false}
+            />
+          </div>
+        )}
+
+        {/* Dots - over the card area but above the overlay bar */}
+        {images.length > 1 && (
+          <div className={styles.dotsOverlay}>
+            {images.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                className={`${styles.dot} ${index === currentIndex ? styles.activeDot : ''}`}
+                onClick={() => setCurrentIndex(index)}
+                aria-label={`Go to image ${index + 1}`}
               />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Navigation dots */}
-      {images.length > 1 && (
-        <div className={styles.dotsContainer}>
-          {images.map((_, index) => (
-            <button
-              key={index}
-              className={`${styles.dot} ${index === currentIndex ? styles.activeDot : ''}`}
-              onClick={() => setCurrentIndex(index)}
-              aria-label={`Go to image ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Message section */}
-      <div className={styles.messageSection}>
-        <p className={styles.messageText}>
-          Will you be my Valentine 2026?
-        </p>
+      {/* Overlay: message + Yes/No on top of images */}
+      <div className={styles.overlay}>
+        <p className={styles.messageText}>Will you be my Valentine 2026?</p>
         <div className={styles.buttonContainer}>
-          <button className={styles.yesButton} onClick={handleYesClick}>
+          <button type="button" className={styles.yesButton} onClick={handleYesClick}>
             Yes
           </button>
-          <button 
-            className={`${styles.noButton} ${noButtonClicked ? styles.noButtonClicked : ''}`} 
+          <button
+            type="button"
+            className={`${styles.noButton} ${noButtonClicked ? styles.noButtonClicked : ''}`}
             onClick={handleNoClick}
           >
             {noButtonClicked ? 'Yes! ❤️' : 'No'}

@@ -1,65 +1,76 @@
 .collageWrapper {
   position: relative;
-  background: linear-gradient(135deg, #ffb3d9 0%, #ff99cc 50%, #ff80bf 100%);
+  width: 100%;
+  height: 100vh;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #ffb3d9 0%, #ff99cc 50%, #ff80bf 100%);
+  overflow: hidden;
   z-index: 2;
 }
 
-.carouselContainer {
-  width: 100%;
-  max-width: 400px;
-  margin: 2rem auto;
-  position: relative;
-  overflow: hidden;
+.cardStack {
+  position: absolute;
+  inset: 0;
   touch-action: pan-y;
   cursor: grab;
   user-select: none;
 }
 
-.carouselContainer:active {
+.cardStack:active {
   cursor: grabbing;
 }
 
-.carouselTrack {
+.cardBase,
+.cardFront {
+  position: absolute;
+  inset: 0;
   display: flex;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   will-change: transform;
 }
 
-.carouselTrack.noTransition {
+.cardBase {
+  z-index: 1;
+}
+
+.cardFront {
+  z-index: 2;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.cardFront.noTransition {
   transition: none;
 }
 
-.card {
-  min-width: 100%;
-  padding: 0 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.cardFront.flyOff {
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
 }
 
 .cardImage {
   width: 100%;
-  max-width: 350px;
-  height: auto;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  object-fit: cover;
+  height: 100%;
+  object-fit: contain;
   display: block;
-  background: white;
-  padding: 0.5rem;
+  pointer-events: none;
 }
 
-.dotsContainer {
+.dotsOverlay {
+  position: absolute;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   justify-content: center;
   gap: 0.5rem;
-  margin: 1.5rem 0;
-  flex-wrap: wrap;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.dotsOverlay .dot {
+  pointer-events: auto;
 }
 
 .dot {
@@ -74,7 +85,7 @@
 }
 
 .dot:hover {
-  background-color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.8);
   transform: scale(1.2);
 }
 
@@ -85,41 +96,55 @@
   box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
-.messageSection {
-  text-align: center;
-  margin-top: 2rem;
-  padding: 0 1rem;
-  max-width: 500px;
+/* Overlay: message + buttons on top of images */
+.overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 1.5rem 1rem 2rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 60%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  pointer-events: none;
+}
+
+.overlay > * {
+  pointer-events: auto;
 }
 
 .messageText {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 600;
   color: #fff;
-  margin-bottom: 2rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-  line-height: 1.4;
+  margin: 0;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
+  line-height: 1.3;
+  text-align: center;
 }
 
 .buttonContainer {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
-  margin-top: 1rem;
+  gap: 1.25rem;
+  flex-wrap: wrap;
 }
 
 .yesButton {
   background: linear-gradient(135deg, #d4af37 0%, #c9a227 100%);
   color: white;
   border: none;
-  padding: 1rem 3rem;
+  padding: 0.9rem 2.5rem;
   border-radius: 50px;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
-  min-width: 120px;
+  min-width: 110px;
 }
 
 .yesButton:hover {
@@ -135,20 +160,20 @@
 .noButton {
   background: rgba(255, 255, 255, 0.3);
   color: white;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  padding: 1rem 3rem;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  padding: 0.9rem 2.5rem;
   border-radius: 50px;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  min-width: 120px;
+  min-width: 110px;
   backdrop-filter: blur(10px);
 }
 
 .noButton:hover {
-  background: rgba(255, 255, 255, 0.4);
-  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.45);
+  border-color: rgba(255, 255, 255, 0.8);
   transform: translateY(-2px);
 }
 
@@ -175,56 +200,31 @@
   }
 }
 
-/* MOBILE RESPONSIVENESS */
 @media (max-width: 768px) {
-  .collageWrapper {
-    padding: 1rem 0.5rem;
-  }
-
-  .carouselContainer {
-    max-width: 100%;
-    margin: 1rem auto;
-  }
-
-  .card {
-    padding: 0 0.5rem;
-  }
-
-  .cardImage {
-    max-width: 100%;
-    border-radius: 15px;
-  }
-
   .messageText {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
   }
 
   .buttonContainer {
     gap: 1rem;
-    flex-direction: row;
   }
 
   .yesButton,
   .noButton {
-    padding: 0.9rem 2rem;
-    font-size: 1.1rem;
+    padding: 0.85rem 2rem;
+    font-size: 1.05rem;
     min-width: 100px;
-  }
-
-  .dotsContainer {
-    margin: 1rem 0;
   }
 }
 
 @media (max-width: 480px) {
   .messageText {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
   }
 
   .yesButton,
   .noButton {
-    padding: 0.8rem 1.5rem;
+    padding: 0.75rem 1.5rem;
     font-size: 1rem;
     min-width: 90px;
   }
