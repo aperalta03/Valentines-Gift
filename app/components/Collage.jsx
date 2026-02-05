@@ -13,6 +13,7 @@ export default function Collage({ onImagesLoaded }) {
   const [isDragging, setIsDragging] = useState(false);
   const [offset, setOffset] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [noButtonClicked, setNoButtonClicked] = useState(false);
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -137,8 +138,9 @@ export default function Collage({ onImagesLoaded }) {
   };
 
   const handleNoClick = () => {
-    // No button can still trigger confetti after a few clicks if desired
-    // For now, keeping it simple
+    // Funny: "No" button changes to "Yes" and triggers confetti!
+    setNoButtonClicked(true);
+    triggerConfetti();
   };
 
   const transformX = -currentIndex * 100 + (offset / (containerRef.current?.offsetWidth || 1)) * 100;
@@ -193,8 +195,11 @@ export default function Collage({ onImagesLoaded }) {
           <button className={styles.yesButton} onClick={handleYesClick}>
             Yes
           </button>
-          <button className={styles.noButton} onClick={handleNoClick}>
-            No
+          <button 
+            className={`${styles.noButton} ${noButtonClicked ? styles.noButtonClicked : ''}`} 
+            onClick={handleNoClick}
+          >
+            {noButtonClicked ? 'Yes! ❤️' : 'No'}
           </button>
         </div>
       </div>

@@ -156,6 +156,25 @@
   transform: translateY(0);
 }
 
+.noButtonClicked {
+  background: linear-gradient(135deg, #d4af37 0%, #c9a227 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4) !important;
+  animation: celebrate 0.5s ease;
+}
+
+@keyframes celebrate {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 /* MOBILE RESPONSIVENESS */
 @media (max-width: 768px) {
   .collageWrapper {
