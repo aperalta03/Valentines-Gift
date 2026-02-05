@@ -141,18 +141,6 @@ export default function Collage({ onImagesLoaded }) {
     // For now, keeping it simple
   };
 
-  const goToPrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
-
-  const goToNext = () => {
-    if (currentIndex < images.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
-
   const transformX = -currentIndex * 100 + (offset / (containerRef.current?.offsetWidth || 1)) * 100;
 
   return (
